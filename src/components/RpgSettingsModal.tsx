@@ -8,6 +8,7 @@ import { ToggleInput } from './ui/ToggleInput';
 import { SelectInput } from './ui/SelectInput';
 import { DEFAULT_MEDUSA_PROMPT } from '../services/medusaService';
 import { parseLooseJson } from '../utils';
+import { useGeminiModels } from '../hooks/useGeminiModels';
 
 interface RpgSettingsModalProps {
     isOpen: boolean;
@@ -117,6 +118,7 @@ export const RpgSettingsModal: React.FC<RpgSettingsModalProps> = ({ isOpen, onCl
     });
     const [jsonInput, setJsonInput] = useState(''); 
     const [importMode, setImportMode] = useState<'merge' | 'overwrite'>('merge'); 
+    const { models: geminiModels } = useGeminiModels(MODEL_OPTIONS);
     
     const promptInputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -366,7 +368,7 @@ export const RpgSettingsModal: React.FC<RpgSettingsModalProps> = ({ isOpen, onCl
                                             onChange={(e) => setSettings({ ...settings, modelId: e.target.value })}
                                             options={[
                                                 { value: '', label: 'Sử dụng Model Chat mặc định' },
-                                                ...MODEL_OPTIONS.map(m => ({ value: m.id, label: m.name }))
+                                                ...geminiModels.map(m => ({ value: m.id, label: m.name }))
                                             ]}
                                             tooltip="Chọn model riêng cho Medusa. Khuyên dùng Gemini Flash hoặc Flash-Lite để tiết kiệm chi phí và tăng tốc độ."
                                         />

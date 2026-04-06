@@ -12,11 +12,13 @@ import { SliderInput } from './ui/SliderInput';
 import { LabeledTextarea } from './ui/LabeledTextarea';
 import { ToggleInput } from './ui/ToggleInput';
 import { useToast } from './ToastSystem';
+import { useGeminiModels } from '../hooks/useGeminiModels';
 
 export const SmartScanSettings: React.FC = () => {
     const [settings, setSettings] = useState<GlobalSmartScanSettings>(DEFAULT_SMART_SCAN_SETTINGS);
     const [showPromptEditor, setShowPromptEditor] = useState(false);
     const { showToast } = useToast();
+    const { models: geminiModels } = useGeminiModels(MODEL_OPTIONS);
 
     // Load initial settings on mount
     useEffect(() => {
@@ -121,7 +123,7 @@ export const SmartScanSettings: React.FC = () => {
                                 label="Mô hình Quét (Khuyên dùng Flash)"
                                 value={settings.model || 'gemini-3-flash-preview'}
                                 onChange={(e) => handleUpdate('model', e.target.value)}
-                                options={MODEL_OPTIONS.map(opt => ({ value: opt.id, label: opt.name }))}
+                                options={geminiModels.map(opt => ({ value: opt.id, label: opt.name }))}
                             />
                         </div>
 

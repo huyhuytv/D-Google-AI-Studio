@@ -40,6 +40,7 @@ export const ArenaSettingsModal: React.FC<ArenaSettingsModalProps> = ({ isOpen, 
     const [openRouterModels, setOpenRouterModels] = useState<OpenRouterModel[]>([]);
     const [proxyModels, setProxyModels] = useState<{id: string, name: string}[]>([]);
     const [proxyProfiles, setProxyProfiles] = useState<ProxyProfile[]>([]);
+    const { models: geminiModels } = useGeminiModels(MODEL_OPTIONS);
     
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -135,7 +136,7 @@ export const ArenaSettingsModal: React.FC<ArenaSettingsModalProps> = ({ isOpen, 
     // Determine available options based on provider
     const currentOptions = useMemo(() => {
         if (arenaProvider === 'gemini') {
-            return MODEL_OPTIONS;
+            return geminiModels;
         }
         if (arenaProvider === 'openrouter') {
             return openRouterModels.map(m => ({ 
@@ -147,7 +148,7 @@ export const ArenaSettingsModal: React.FC<ArenaSettingsModalProps> = ({ isOpen, 
             return proxyModels.length > 0 ? proxyModels : PROXY_MODEL_OPTIONS;
         }
         return [];
-    }, [arenaProvider, openRouterModels, proxyModels]);
+    }, [arenaProvider, openRouterModels, proxyModels, geminiModels]);
 
     if (!isOpen) return null;
 

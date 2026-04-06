@@ -9,6 +9,7 @@ import DOMPurify from 'dompurify';
 import { useCharacter } from '../../contexts/CharacterContext';
 import { usePreset } from '../../contexts/PresetContext';
 import { useToast } from '../ToastSystem';
+import { useGeminiModels } from '../../hooks/useGeminiModels';
 
 interface AssistantPanelProps {
     isOpen: boolean;
@@ -253,6 +254,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const { updateActiveCharacter, reloadCharacters } = useCharacter();
     const { presets, activePresetName, updateActivePreset, reloadPresets } = usePreset();
     const { showToast } = useToast();
+    const { models: geminiModels } = useGeminiModels(MODEL_OPTIONS);
 
     const [messages, setMessages] = useState<AssistantMessage[]>([
         { role: 'model', content: 'Xin chào! Tôi là Co-pilot. Tôi đã đọc xong Sổ tay nhân vật, Biến số và Lời nhắc hệ thống. Bạn cần tôi giải thích điều gì?' }
@@ -576,7 +578,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                         onChange={(e) => setSelectedModel(e.target.value)}
                         className="w-full bg-slate-950 border border-slate-700 rounded p-1.5 text-xs text-slate-300 focus:ring-1 focus:ring-sky-500 outline-none"
                     >
-                        {MODEL_OPTIONS.map(m => (
+                        {geminiModels.map(m => (
                             <option key={m.id} value={m.id}>{m.name}</option>
                         ))}
                     </select>

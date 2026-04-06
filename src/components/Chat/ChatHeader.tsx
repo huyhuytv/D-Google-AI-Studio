@@ -21,6 +21,7 @@ import {
 } from '../../services/settingsService';
 import { fetchProxyModels } from '../../services/api/proxyApi';
 import { ToggleInput } from '../ui/ToggleInput';
+import { useGeminiModels } from '../../hooks/useGeminiModels';
 
 import { useUserPersona } from '../../contexts/UserPersonaContext';
 import { ArenaSettingsModal } from './ArenaSettingsModal';
@@ -249,6 +250,7 @@ const QuickConfigModal: React.FC<{
     const [proxyModels, setProxyModels] = useState<StoredProxyModel[]>([]);
     const [proxyProfiles, setProxyProfiles] = useState<ProxyProfile[]>([]);
     const [isLoadingModels, setIsLoadingModels] = useState(false);
+    const { models: geminiModels } = useGeminiModels(MODEL_OPTIONS);
 
     // Sync state when modal opens
     useEffect(() => {
@@ -341,7 +343,7 @@ const QuickConfigModal: React.FC<{
     };
 
     const currentOptions = conn.source === 'gemini' 
-        ? MODEL_OPTIONS 
+        ? geminiModels 
         : (proxyModels.length > 0 ? proxyModels : PROXY_MODEL_OPTIONS);
 
     return (
