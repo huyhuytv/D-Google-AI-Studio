@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
-import { getApiKey } from '../services/settingsService';
+import { getApiKey, getStoredGeminiModels, saveStoredGeminiModels } from '../services/settingsService';
 
 export interface GeminiModel {
     id: string;
     name: string;
 }
 
+// Initialize from persistent storage
 let cachedModels: GeminiModel[] | null = null;
+const storedModels = getStoredGeminiModels();
+if (storedModels.length > 0) {
+    cachedModels = storedModels;
+}
+
 let isFetching = false;
 let fetchPromise: Promise<GeminiModel[]> | null = null;
 
@@ -14,6 +20,7 @@ export const clearGeminiModelsCache = () => {
     cachedModels = null;
     fetchPromise = null;
     isFetching = false;
+    saveStoredGeminiModels([]); // Clear persistent storage too
 };
 
 export const fetchGeminiModels = async (providedApiKey?: string): Promise<GeminiModel[]> => {
@@ -25,7 +32,7 @@ export const fetchGeminiModels = async (providedApiKey?: string): Promise<Gemini
         const apiKey = providedApiKey || getApiKey();
         if (!apiKey) {
             isFetching = false;
-            return [];
+            return cachedModels || [];
         }
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
@@ -40,15 +47,19 @@ export const fetchGeminiModels = async (providedApiKey?: string): Promise<Gemini
                         id: m.name.replace('models/', ''),
                         name: m.displayName || m.name.replace('models/', '')
                     }));
-                if (!providedApiKey) {
+                
+                // Always update cache and persistent storage if we got results
+                if (models.length > 0) {
                     cachedModels = models;
+                    saveStoredGeminiModels(models);
                 }
                 return models;
             }
-            return [];
+            return cachedModels || [];
         } catch (error) {
             console.error("Error fetching Gemini models:", error);
-            throw error;
+            // If fetch fails, return cached if available
+            return cachedModels || [];
         } finally {
             isFetching = false;
         }
@@ -58,6 +69,7 @@ export const fetchGeminiModels = async (providedApiKey?: string): Promise<Gemini
 };
 
 export const useGeminiModels = (defaultOptions: GeminiModel[]) => {
+    // Start with cached models or default options
     const [models, setModels] = useState<GeminiModel[]>(cachedModels || defaultOptions);
     const [isLoading, setIsLoading] = useState(!cachedModels);
 
@@ -78,13 +90,15 @@ export const useGeminiModels = (defaultOptions: GeminiModel[]) => {
     };
 
     useEffect(() => {
+        // Only auto-fetch if we don't have cached models
         if (!cachedModels) {
             fetchModels().catch(() => {});
         }
     }, []);
 
     const refetch = async (apiKey?: string) => {
-        clearGeminiModelsCache();
+        // For manual refetch, we don't necessarily clear the cache first, 
+        // we just trigger a new fetch that will overwrite it.
         return await fetchModels(apiKey);
     };
 
