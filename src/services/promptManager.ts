@@ -511,9 +511,9 @@ export async function constructChatPrompt(
     // Tầng 2: Trí nhớ Ngắn hạn (Lịch sử trang này)
     const currentPageHistoryList = currentPageMessages.map(msg => {
         // Get content
-        const rawText = getMessageContent(msg);
-        // Apply cleaning specifically for history injection
-        const cleanText = cleanMessageContent(rawText);
+        const rawText = getMessageContent(msg, disableInteractiveMode);
+        // Apply cleaning specifically for history injection - Skip if in plain text mode
+        const cleanText = disableInteractiveMode ? rawText : cleanMessageContent(rawText);
         // Apply macros
         const content = replaceIdentityMacros(cleanText);
         
