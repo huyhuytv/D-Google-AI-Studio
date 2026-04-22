@@ -228,8 +228,31 @@ export const useMessageManipulator = ({
         await saveSession({ messages: newMessages });
     }, [saveSession, setMessages]);
 
+    const deleteOneMessage = useCallback(async (messageId: string) => {
+        const state = useChatStore.getState();
+        if (state.isLoading || state.isSummarizing) {
+            logSystemMessage('error', 'system', `Cannot delete message: System is busy.`);
+            return;
+        }
+
+        const messages = state.messages;
+        const newMessages = messages.filter(msg => msg.id !== messageId);
+        
+        if (newMessages.length === messages.length) return;
+
+        setMessages(newMessages);
+        
+        // Save Session
+        await saveSession({
+            messages: newMessages
+        });
+        
+        logSystemMessage('interaction', 'system', `Deleted single message: ${messageId}`);
+    }, [saveSession, setMessages, logSystemMessage]);
+
     return {
         deleteMessage,
+        deleteOneMessage,
         deleteLastTurn,
         editMessage
     };

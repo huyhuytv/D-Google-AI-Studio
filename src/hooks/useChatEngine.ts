@@ -44,6 +44,7 @@ export const useChatEngine = (sessionId: string | null) => {
     
     const { 
         deleteMessage, 
+        deleteOneMessage,
         deleteLastTurn, 
         editMessage 
     } = useMessageManipulator({ 
@@ -192,6 +193,7 @@ export const useChatEngine = (sessionId: string | null) => {
         regenerateLastResponse, 
         stopGeneration, 
         deleteMessage,
+        deleteOneMessage,
         deleteLastTurn,
         editMessage,
         saveSession,

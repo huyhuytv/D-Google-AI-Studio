@@ -80,12 +80,15 @@ interface MessageListProps {
     regenerateLastResponse: () => void;
     deleteLastTurn: () => void;
     onDeleteMessage: (messageId: string) => void;
+    onDeleteSingleMessage: (messageId: string) => void; // NEW
     onOpenAuthorNote: () => void;
     onOpenWorldInfo: () => void;
     
     // NEW: Arena Callback
     onArenaSelect: (id: string, selection: 'A' | 'B') => void;
     onArenaRetry: (id: string, selection: 'A' | 'B') => void;
+
+    disableInteractiveMode?: boolean; // NEW
 
     // Data
     scripts: TavernHelperScript[];
@@ -116,10 +119,12 @@ const MessageListComponent: React.FC<MessageListProps> = ({
     regenerateLastResponse,
     deleteLastTurn,
     onDeleteMessage,
+    onDeleteSingleMessage,
     onOpenAuthorNote,
     onOpenWorldInfo,
     onArenaSelect, // Used here
     onArenaRetry, // Used here
+    disableInteractiveMode = false,
     scripts,
     variables,
     extensionSettings,
@@ -223,7 +228,7 @@ const MessageListComponent: React.FC<MessageListProps> = ({
                 // --- RAW STREAMING LOGIC ---
                 const isStreaming = isLoading && isLastMessage && msg.role === 'model';
 
-                const menuActions = [
+                const menuActions: { label: string; onClick: () => void; disabled?: boolean; className?: string }[] = [
                     { label: 'Chỉnh sửa', onClick: () => onStartEdit(msg) },
                     { label: 'Ghi chú của Tác giả', onClick: onOpenAuthorNote },
                     { label: 'Quản lý World Info', onClick: onOpenWorldInfo },
@@ -239,6 +244,15 @@ const MessageListComponent: React.FC<MessageListProps> = ({
                         className: 'text-red-400 hover:bg-red-800/50' 
                     },
                 ];
+
+                if (disableInteractiveMode) {
+                    menuActions.push({
+                        label: 'Xóa tin nhắn này',
+                        onClick: () => onDeleteSingleMessage(msg.id),
+                        disabled: !canDelete,
+                        className: 'text-orange-400 hover:bg-orange-800/50'
+                    });
+                }
 
                 if (!msg.content.trim() && !msg.interactiveHtml && !msg.arena && editingMessageId !== msg.id) return null;
 

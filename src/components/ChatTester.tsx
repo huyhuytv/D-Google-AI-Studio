@@ -242,11 +242,14 @@ export const ChatTester: React.FC<ChatTesterProps> = ({ sessionId, onBack }) => 
                 regenerateLastResponse={engine.regenerateLastResponse}
                 deleteLastTurn={engine.deleteLastTurn}
                 onDeleteMessage={engine.deleteMessage} 
+                onDeleteSingleMessage={engine.deleteOneMessage} // NEW
                 onOpenAuthorNote={() => ui.setIsAuthorNoteOpen(true)}
                 onOpenWorldInfo={() => ui.setIsWorldInfoOpen(true)}
                 
                 onArenaSelect={engine.handleArenaSelection} // WIRED HERE
                 onArenaRetry={engine.handleArenaRetry} // WIRED HERE
+
+                disableInteractiveMode={engine.visualState.disableInteractiveMode} // NEW
 
                 scripts={engine.card.extensions?.TavernHelper_scripts || []}
                 variables={engine.variables}
