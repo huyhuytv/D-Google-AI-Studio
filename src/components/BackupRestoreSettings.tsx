@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { createFullSystemBackup, restoreFullSystemBackup } from '../services/snapshotService';
+import { createFullSystemBackup, restoreFullSystemBackup, cleanupSystemData } from '../services/snapshotService';
 import { Loader } from './Loader';
 import { useToast } from './ToastSystem';
 import { useCharacter } from '../contexts/CharacterContext';
@@ -11,6 +11,7 @@ import { useUserPersona } from '../contexts/UserPersonaContext';
 export const BackupRestoreSettings: React.FC = () => {
     const [isBackingUp, setIsBackingUp] = useState(false);
     const [isRestoring, setIsRestoring] = useState(false);
+    const [isCleaning, setIsCleaning] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { showToast } = useToast();
 
@@ -18,6 +19,23 @@ export const BackupRestoreSettings: React.FC = () => {
     const { reloadPresets } = usePreset();
     const { reloadLorebooks } = useLorebook();
     const { reloadPersonas } = useUserPersona();
+
+    // HANDLE CLEANUP
+    const handleCleanup = async () => {
+        if (!window.confirm("Bạn có chắc chắn muốn dọn dẹp dữ liệu rác? Thao tác này sẽ xóa vĩnh viễn các nhật ký gỡ lỗi (logs) và dữ liệu chuẩn đoán trong tất cả cuộc trò chuyện để giảm dung lượng bộ nhớ. Lịch sử chat chính vẫn được giữ nguyên.")) {
+            return;
+        }
+
+        setIsCleaning(true);
+        try {
+            const result = await cleanupSystemData();
+            showToast(`Đã dọn dẹp xong ${result.sessionsCleaned} cuộc trò chuyện.`, 'success');
+        } catch (e) {
+            showToast(`Lỗi dọn dẹp: ${e instanceof Error ? e.message : String(e)}`, 'error');
+        } finally {
+            setIsCleaning(false);
+        }
+    };
 
     // HANDLE BACKUP
     const handleBackup = async () => {
@@ -135,6 +153,32 @@ export const BackupRestoreSettings: React.FC = () => {
                         )}
                     </button>
                 </div>
+            </div>
+
+            {/* CLEANUP SECTION */}
+            <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700 flex flex-col md:flex-row items-center gap-6 hover:border-orange-500/50 ">
+                <div className="w-16 h-16 bg-orange-900/30 text-orange-400 rounded-full flex items-center justify-center text-3xl shrink-0">
+                    🧹
+                </div>
+                <div className="flex-grow text-center md:text-left">
+                    <h4 className="text-lg font-bold text-slate-200 mb-1">Dọn Dẹp Hệ Thống (Optimize)</h4>
+                    <p className="text-sm text-slate-400">
+                        Xóa bỏ các dữ liệu nhật ký (logs), nội dung prompt gỡ lỗi và thông tin chuẩn đoán dư thừa trong tất cả các phiên trò chuyện để giải phóng dung lượng. 
+                        Nội dung tin nhắn văn bản sẽ <strong>không</strong> bị ảnh hưởng.
+                    </p>
+                </div>
+                <button
+                    onClick={handleCleanup}
+                    disabled={isCleaning}
+                    className="w-full md:w-auto py-3 px-8 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-lg shadow-lg shadow-orange-900/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    {isCleaning ? <Loader message="Đang dọn..." /> : (
+                        <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                            Dọn Dẹp Ngay
+                        </>
+                    )}
+                </button>
             </div>
         </div>
     );

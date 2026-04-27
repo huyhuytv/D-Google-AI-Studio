@@ -173,6 +173,61 @@ export const createFullSystemBackup = async (): Promise<File> => {
 };
 
 /**
+ * CLEANUP SYSTEM DATA: Removes heavy logs and debug info from chat sessions to reduce storage usage.
+ */
+export const cleanupSystemData = async (): Promise<{ sessionsCleaned: number }> => {
+    try {
+        const sessions = await dbService.getAllChatSessions();
+        let cleanedCount = 0;
+
+        for (const session of sessions) {
+            let needsUpdate = false;
+
+            // 1. Clear session logs (The heaviest part)
+            if (session.logs && (
+                (session.logs.turns && session.logs.turns.length > 0) ||
+                (session.logs.systemLog && session.logs.systemLog.length > 0) ||
+                (session.logs.worldInfoLog && session.logs.worldInfoLog.length > 0) ||
+                (session.logs.smartScanLog && session.logs.smartScanLog.length > 0) ||
+                (session.logs.mythicLog && session.logs.mythicLog.length > 0) ||
+                (session.logs.networkLog && session.logs.networkLog.length > 0) ||
+                (session.logs.selectionLog && session.logs.selectionLog.length > 0)
+            )) {
+                session.logs = {
+                    turns: [],
+                    systemLog: [],
+                    worldInfoLog: [],
+                    smartScanLog: [],
+                    mythicLog: [],
+                    networkLog: [],
+                    selectionLog: []
+                };
+                needsUpdate = true;
+            }
+
+            // 2. Clear diagnostics and other small redundant fields
+            if (session.initialDiagnosticLog) {
+                session.initialDiagnosticLog = undefined;
+                needsUpdate = true;
+            }
+
+            if (needsUpdate) {
+                await dbService.saveChatSession(session);
+                cleanedCount++;
+            }
+
+            // Yield
+            await new Promise(resolve => setTimeout(resolve, 0));
+        }
+
+        return { sessionsCleaned: cleanedCount };
+    } catch (e) {
+        console.error("Cleanup Failed:", e);
+        throw new Error(`Lỗi dọn dẹp dữ liệu: ${e instanceof Error ? e.message : String(e)}`);
+    }
+};
+
+/**
  * FULL SYSTEM RESTORE: Wipes/Overwrites data from a backup file.
  */
 export const restoreFullSystemBackup = async (file: File): Promise<void> => {

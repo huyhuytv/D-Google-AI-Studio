@@ -92,6 +92,7 @@ export interface ChatSession {
         smartScanLog: string[];
         mythicLog: string[];
         networkLog?: NetworkLogEntry[]; // NEW
+        selectionLog?: string[]; // NEW
     };
     // -----------------------------
 
