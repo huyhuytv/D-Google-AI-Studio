@@ -30,6 +30,11 @@ interface ChatInputProps {
     error?: string | null;
     onClearError?: () => void;
     isSyncingLorebook?: boolean; // NEW
+
+    // New Props for Action Suggestion
+    onFetchActionSuggestions?: (intent: string) => Promise<string[]>;
+    isFetchingSuggestions?: boolean;
+    suggestionSettingsEnabled?: boolean;
 }
 
 const AVAILABLE_COMMANDS = [
@@ -69,12 +74,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     onCancelStoryMode,
     error,
     onClearError,
-    isSyncingLorebook = false // NEW
+    isSyncingLorebook = false, // NEW
+    onFetchActionSuggestions,
+    isFetchingSuggestions = false,
+    suggestionSettingsEnabled = false
 }) => {
     const [userInput, setUserInput] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [filteredCommands, setFilteredCommands] = useState(AVAILABLE_COMMANDS);
     const [selectedCmdIndex, setSelectedCmdIndex] = useState(0);
+    const [actionSuggestionsList, setActionSuggestionsList] = useState<string[]>([]);
     const inputRef = useRef<HTMLInputElement>(null);
     
     useEffect(() => {
@@ -154,6 +163,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             } else if (e.key === 'Escape') {
                 setShowSuggestions(false);
             }
+        }
+    };
+
+    const handleFetchActionSuggestions = async () => {
+        if (!onFetchActionSuggestions) return;
+        try {
+            const result = await onFetchActionSuggestions(userInput.trim());
+            setActionSuggestionsList(result);
+        } catch (e) {
+            console.error(e);
         }
     };
 
@@ -276,6 +295,41 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 </div>
             )}
 
+            {/* Action Suggestions List */}
+            {actionSuggestionsList.length > 0 && (
+                <div className="px-4 pt-4 pb-2">
+                    <div className="mb-2 flex justify-between items-center">
+                        <span className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1">
+                            <span className="text-sm">💡</span> Gợi ý Hành động
+                        </span>
+                        <button 
+                            onClick={() => setActionSuggestionsList([])}
+                            className="text-slate-400 hover:text-white text-xs border border-slate-600 rounded px-2 py-1 bg-slate-800 hover:bg-slate-700"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                    <div className="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x">
+                        {actionSuggestionsList.map((suggestion, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => {
+                                    onSend(suggestion);
+                                    setActionSuggestionsList([]);
+                                }}
+                                className={`text-left text-sm p-3 rounded-lg flex-shrink-0 w-64 whitespace-normal border shadow-md snap-center ${
+                                    isImmersive
+                                    ? 'bg-slate-800/80 border-slate-600 hover:bg-slate-700 hover:border-slate-400 text-slate-200'
+                                    : 'bg-slate-700 border-slate-600 hover:bg-slate-600 hover:border-sky-500 text-slate-200'
+                                } transition-all active:scale-95`}
+                            >
+                                <span className="line-clamp-3">{suggestion}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className={inputFormClasses}>
                 {/* Status Loader */}
                 <div className="flex items-center justify-end mb-3 min-h-[20px]">
@@ -312,22 +366,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                 </span>
                             </div>
                         ) : (
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={userInput}
-                                onChange={(e) => setUserInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder={isInputLocked ? "Đang chờ kịch bản..." : (isSummarizing ? "Hệ thống đang tóm tắt..." : (isSyncingLorebook ? "Đang đồng bộ World Info..." : (isAutoLooping ? "Đang tự động chạy..." : (isImmersive ? "Nhập tin nhắn..." : "Nhập tin nhắn... (Gõ / để xem lệnh)"))))}
-                                className={`w-full rounded-lg p-3 text-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition disabled:opacity-50 ${
-                                    isImmersive 
-                                    ? 'bg-slate-800/70 border-slate-600/50  placeholder-slate-400' 
-                                    : 'bg-slate-700 border border-slate-600'
-                                } ${(isInputLocked || isSummarizing || isSyncingLorebook) ? 'cursor-not-allowed opacity-60' : ''}`}
-                                disabled={isLoading || isInputLocked || isAutoLooping || isSummarizing || isSyncingLorebook}
-                                aria-label="Chat input"
-                                autoComplete="off"
-                            />
+                            <div className="relative">
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder={isInputLocked ? "Đang chờ kịch bản..." : (isSummarizing ? "Hệ thống đang tóm tắt..." : (isSyncingLorebook ? "Đang đồng bộ World Info..." : (isAutoLooping ? "Đang tự động chạy..." : (isImmersive ? "Nhập tin nhắn..." : "Nhập tin nhắn... (Gõ / để xem lệnh)"))))}
+                                    className={`w-full rounded-lg pl-3 pr-10 py-3 text-slate-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition disabled:opacity-50 ${
+                                        isImmersive 
+                                        ? 'bg-slate-800/70 border-slate-600/50 placeholder-slate-400' 
+                                        : 'bg-slate-700 border border-slate-600'
+                                    } ${(isInputLocked || isSummarizing || isSyncingLorebook) ? 'cursor-not-allowed opacity-60' : ''}`}
+                                    disabled={isLoading || isInputLocked || isAutoLooping || isSummarizing || isSyncingLorebook}
+                                    aria-label="Chat input"
+                                    autoComplete="off"
+                                />
+                            </div>
                         )}
                     </div>
                     
@@ -358,6 +414,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             )
                         )}
                     </button>
+                    
+                    {/* Action Suggestion Request Button */}
+                    {suggestionSettingsEnabled && !isStoryMode && !isAutoLooping && !isLoading && (
+                        <button
+                            type="button"
+                            onClick={handleFetchActionSuggestions}
+                            disabled={isFetchingSuggestions || isInputLocked || isSummarizing || isSyncingLorebook}
+                            className={`py-2 px-3 rounded-lg border flex-shrink-0 flex items-center justify-center transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                                isImmersive
+                                ? 'bg-amber-600/80 hover:bg-amber-500 border-amber-500 text-white'
+                                : 'bg-amber-600 hover:bg-amber-500 border-amber-500 text-white'
+                            }`}
+                            title="Gợi ý hành động từ AI"
+                        >
+                            {isFetchingSuggestions ? (
+                                <span className="animate-spin text-lg">⏳</span>
+                            ) : (
+                                <span className="text-lg" aria-hidden="true">💡</span>
+                            )}
+                        </button>
+                    )}
 
                     {/* Auto Loop Toggle Button - FIX: Allow viewing/toggling even when loading */}
                     {onToggleAutoLoop && !isInputLocked && !isSummarizing && (

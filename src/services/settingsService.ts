@@ -13,6 +13,7 @@ const GEMINI_MODELS_KEY = 'sillyTavernStudio_geminiModels'; // NEW KEY
 const GLOBAL_CONNECTION_KEY = 'sillyTavernStudio_globalConnection';
 const GLOBAL_SMART_SCAN_KEY = 'sillyTavernStudio_smartScanGlobal';
 const GLOBAL_CONTEXT_KEY = 'sillyTavernStudio_globalContext';
+const GLOBAL_ACTION_SUGGESTION_KEY = 'sillyTavernStudio_globalActionSuggestion';
 const GLOBAL_TTS_KEY = 'sillyTavernStudio_ttsGlobal';
 
 // ... (Existing options and interfaces remain same) ...
@@ -55,6 +56,12 @@ export interface GlobalSmartScanSettings {
     semantic_threshold: number;
     max_semantic_entries: number;
     embedding_batch_size: number;
+}
+
+// Global Action Suggestion Settings
+export interface GlobalActionSuggestionSettings {
+    enabled: boolean;
+    gemini_model: string;
 }
 
 // Global Context & Memory Settings
@@ -247,6 +254,11 @@ export const DEFAULT_GLOBAL_CONTEXT_SETTINGS: GlobalContextSettings = {
     summarization_prompt: DEFAULT_CONTEXT_PROMPT
 };
 
+export const DEFAULT_GLOBAL_ACTION_SUGGESTION_SETTINGS: GlobalActionSuggestionSettings = {
+    enabled: false,
+    gemini_model: 'gemini-3-flash-preview'
+};
+
 // NEW: Default TTS Settings
 export const DEFAULT_GLOBAL_TTS_SETTINGS: GlobalTTSSettings = {
     tts_enabled: false,
@@ -317,6 +329,24 @@ export const getGlobalContextSettings = (): GlobalContextSettings => {
 
 export const saveGlobalContextSettings = (settings: GlobalContextSettings): void => {
     localStorage.setItem(GLOBAL_CONTEXT_KEY, JSON.stringify(settings));
+};
+
+// --- GLOBAL ACTION SUGGESTION SETTINGS ---
+export const getGlobalActionSuggestionSettings = (): GlobalActionSuggestionSettings => {
+    try {
+        const stored = localStorage.getItem(GLOBAL_ACTION_SUGGESTION_KEY);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return { ...DEFAULT_GLOBAL_ACTION_SUGGESTION_SETTINGS, ...parsed };
+        }
+    } catch (e) {
+        console.error("Failed to load global action suggestion settings", e);
+    }
+    return DEFAULT_GLOBAL_ACTION_SUGGESTION_SETTINGS;
+};
+
+export const saveGlobalActionSuggestionSettings = (settings: GlobalActionSuggestionSettings): void => {
+    localStorage.setItem(GLOBAL_ACTION_SUGGESTION_KEY, JSON.stringify(settings));
 };
 
 // --- GLOBAL TTS SETTINGS ---
@@ -571,7 +601,7 @@ export const getAllLocalStorageData = (): Record<string, any> => {
         ACTIVE_MODEL_KEY, API_SETTINGS_KEY, API_KEY_INDEX_KEY, 
         OPENROUTER_API_KEY_KEY, PROXY_URL_KEY, PROXY_PASSWORD_KEY, 
         PROXY_LEGACY_MODE_KEY, PROXY_FOR_TOOLS_KEY, GLOBAL_CONNECTION_KEY,
-        GLOBAL_SMART_SCAN_KEY, GLOBAL_CONTEXT_KEY, GLOBAL_TTS_KEY,
+        GLOBAL_SMART_SCAN_KEY, GLOBAL_CONTEXT_KEY, GLOBAL_ACTION_SUGGESTION_KEY, GLOBAL_TTS_KEY,
         PROXY_PROFILES_KEY, PROXY_MODELS_KEY, GEMINI_MODELS_KEY, // Added models for backup
         ARENA_SETTINGS_KEY // NEW
     ];

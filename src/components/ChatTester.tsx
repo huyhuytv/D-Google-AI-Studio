@@ -15,9 +15,10 @@ import { applyVariableOperation } from '../services/variableEngine';
 import { countTotalTurns } from '../hooks/useChatMemory'; 
 import { ChatOverlayManager } from './Chat/ChatOverlayManager'; 
 import { RpgNotificationOverlay } from './Chat/RpgNotificationOverlay'; // NEW Import
-import { getGlobalContextSettings, getGlobalSmartScanSettings } from '../services/settingsService'; // NEW Import
+import { getGlobalContextSettings, getGlobalSmartScanSettings, getGlobalActionSuggestionSettings } from '../services/settingsService'; // NEW Import
 import { syncEmbeddings } from '../services/embeddingService';
 import { useToast } from './ToastSystem';
+import { fetchActionSuggestions } from '../services/ai/semanticTasks';
 
 interface ChatTesterProps {
     sessionId: string;
@@ -37,6 +38,7 @@ export const ChatTester: React.FC<ChatTesterProps> = ({ sessionId, onBack }) => 
 
     const iframeRefs = useRef<Record<string, HTMLIFrameElement | null>>({});
     const [isSyncingLorebook, setIsSyncingLorebook] = useState(false);
+    const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
     const { showToast } = useToast();
 
     // Auto-sync lorebook embeddings in background
@@ -152,6 +154,22 @@ export const ChatTester: React.FC<ChatTesterProps> = ({ sessionId, onBack }) => 
             }
         } finally {
             setIsSyncingLorebook(false);
+        }
+    };
+
+    const handleFetchActionSuggestions = async (intent: string) => {
+        setIsFetchingSuggestions(true);
+        try {
+            // Get last 15 messages roughly
+            const recentMessages = engine.messages.slice(-15);
+            const res = await fetchActionSuggestions(recentMessages, intent);
+            return res.suggestions || [];
+        } catch (error: any) {
+            console.error("Action suggestions failed:", error);
+            showToast("Lỗi khi lấy gợi ý hành động. Vui lòng thử lại.", "error");
+            return [];
+        } finally {
+            setIsFetchingSuggestions(false);
         }
     };
 
@@ -281,6 +299,9 @@ export const ChatTester: React.FC<ChatTesterProps> = ({ sessionId, onBack }) => 
                 error={engine.error} 
                 onClearError={() => engine.setError(null)} 
                 isSyncingLorebook={isSyncingLorebook}
+                onFetchActionSuggestions={handleFetchActionSuggestions}
+                isFetchingSuggestions={isFetchingSuggestions}
+                suggestionSettingsEnabled={getGlobalActionSuggestionSettings().enabled}
             >
                 <DebugPanel 
                     logs={engine.logs} 

@@ -4,11 +4,12 @@ import { UserPersonaManager } from './UserPersonaManager';
 import { ApiSettings } from './ApiSettings';
 import { SmartScanSettings } from './SmartScanSettings';
 import { SmartContextSettings } from './SmartContextSettings'; 
+import { ActionSuggestionSettings } from './ActionSuggestionSettings';
 import { TtsSettings } from './TtsSettings'; 
 import { BackupRestoreSettings } from './BackupRestoreSettings'; 
 // import { usePreset } from '../contexts/PresetContext'; // Removed
 
-type ActiveSubTab = 'persona' | 'api' | 'smartscan' | 'context' | 'tts' | 'backup';
+type ActiveSubTab = 'persona' | 'api' | 'smartscan' | 'context' | 'actions' | 'tts' | 'backup';
 
 const SubTabButton: React.FC<{
   tabId: ActiveSubTab;
@@ -44,6 +45,7 @@ export const SettingsTab: React.FC = () => {
                     <SubTabButton tabId="persona" currentTab={activeSubTab} onClick={setActiveSubTab}>Hồ sơ Người dùng</SubTabButton>
                     <SubTabButton tabId="api" currentTab={activeSubTab} onClick={setActiveSubTab}>Thiết lập API</SubTabButton>
                     <SubTabButton tabId="backup" currentTab={activeSubTab} onClick={setActiveSubTab}>Sao lưu & Khôi phục</SubTabButton>
+                    <SubTabButton tabId="actions" currentTab={activeSubTab} onClick={setActiveSubTab}>Gợi ý Hành động</SubTabButton>
                     <SubTabButton tabId="tts" currentTab={activeSubTab} onClick={setActiveSubTab}>Giọng nói (TTS)</SubTabButton>
                     <SubTabButton tabId="context" currentTab={activeSubTab} onClick={setActiveSubTab}>Ngữ cảnh & Bộ nhớ</SubTabButton>
                     <SubTabButton tabId="smartscan" currentTab={activeSubTab} onClick={setActiveSubTab}>Quét Thông Minh</SubTabButton>
@@ -60,6 +62,11 @@ export const SettingsTab: React.FC = () => {
                 {activeSubTab === 'persona' && <UserPersonaManager />}
                 {activeSubTab === 'api' && <ApiSettings />}
                 {activeSubTab === 'backup' && <BackupRestoreSettings />}
+                {activeSubTab === 'actions' && (
+                    <div className="bg-slate-800/50 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+                        <ActionSuggestionSettings />
+                    </div>
+                )}
                 {activeSubTab === 'tts' && (
                     <div className="bg-slate-800/50 p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
                         <TtsSettings />
