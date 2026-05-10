@@ -19,6 +19,7 @@ import { getGlobalContextSettings, getGlobalSmartScanSettings, getGlobalActionSu
 import { syncEmbeddings } from '../services/embeddingService';
 import { useToast } from './ToastSystem';
 import { fetchActionSuggestions } from '../services/ai/semanticTasks';
+import { cleanMessageContent } from '../services/promptManager';
 
 interface ChatTesterProps {
     sessionId: string;
@@ -162,7 +163,17 @@ export const ChatTester: React.FC<ChatTesterProps> = ({ sessionId, onBack }) => 
         try {
             // Get last 15 messages roughly
             const recentMessages = engine.messages.slice(-15);
-            const res = await fetchActionSuggestions(recentMessages, intent);
+            const currentPageHistory = recentMessages.map(msg => `${msg.role}: ${cleanMessageContent(msg.content)}`).join('\n\n');
+            const longTermSummary = engine.longTermSummaries.join('\n\n');
+            
+            let worldInfo = "";
+            const lastModelMsg = engine.messages.slice().reverse().find(m => m.role === 'model');
+            if (lastModelMsg && lastModelMsg.activeLorebookUids && lastModelMsg.activeLorebookUids.length > 0) {
+                const activeEntries = lorebooks.flatMap(lb => lb.book.entries.filter((e: any) => lastModelMsg.activeLorebookUids!.includes(e.uid)));
+                worldInfo = activeEntries.map((e: any) => `[${e.keys.join(', ')}: ${e.content}]`).join('\n');
+            }
+
+            const res = await fetchActionSuggestions(longTermSummary, currentPageHistory, worldInfo, intent);
             return res.suggestions || [];
         } catch (error: any) {
             console.error("Action suggestions failed:", error);

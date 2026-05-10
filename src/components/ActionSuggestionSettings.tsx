@@ -8,11 +8,13 @@ import { useGeminiModels } from '../hooks/useGeminiModels';
 import { useToast } from './ToastSystem';
 import { ToggleInput } from './ui/ToggleInput';
 import { SelectInput } from './ui/SelectInput';
+import { LabeledTextarea } from './ui/LabeledTextarea';
 
 export const ActionSuggestionSettings: React.FC = () => {
     const { showToast } = useToast();
     const [enabled, setEnabled] = useState(false);
     const [geminiModel, setGeminiModel] = useState('');
+    const [promptText, setPromptText] = useState('');
     const { models: geminiModels, isLoading } = useGeminiModels([]);
 
     const conn = getConnectionSettings();
@@ -22,12 +24,14 @@ export const ActionSuggestionSettings: React.FC = () => {
         const settings = getGlobalActionSuggestionSettings();
         setEnabled(settings.enabled);
         setGeminiModel(settings.gemini_model);
+        setPromptText(settings.action_suggestion_prompt);
     }, []);
 
     const handleSave = () => {
         saveGlobalActionSuggestionSettings({
             enabled,
-            gemini_model: geminiModel
+            gemini_model: geminiModel,
+            action_suggestion_prompt: promptText
         });
         showToast('Đã lưu cấu hình Gợi ý hành động', 'success');
     };
@@ -66,6 +70,20 @@ export const ActionSuggestionSettings: React.FC = () => {
                             <p className="text-sm text-slate-300">
                                 Đang sử dụng {conn.source === 'proxy' ? 'Proxy Tool Model' : 'OpenRouter Model'} (Được cấu hình trong Thiết lập API)
                             </p>
+                        </div>
+                    )}
+
+                    {enabled && (
+                        <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                            <h4 className="text-sm font-bold text-sky-300 mb-2">Tùy chỉnh Lời nhắc (Prompt)</h4>
+                            <p className="text-xs text-slate-400 mb-4">Các biến mặc định: <code className="text-sky-300">{"{{long_term_summary}}"}</code>, <code className="text-sky-300">{"{{current_page_history}}"}</code>, <code className="text-sky-300">{"{{worldInfo}}"}</code>, <code className="text-sky-300">{"{{user_input}}"}</code></p>
+                            <LabeledTextarea
+                                label="Lời nhắc (System Prompt)"
+                                value={promptText}
+                                onChange={(e) => setPromptText(e.target.value)}
+                                rows={15}
+                                placeholder="Nhập lời nhắc tuỳ chỉnh cho Gợi ý hành động..."
+                            />
                         </div>
                     )}
                 </div>
